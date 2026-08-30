@@ -64,6 +64,10 @@
   let locale = loadLocale();
   let viewedOffset = 0; // 0 = today, 1..MAX_OFFSET = days back
 
+  // Set immediately (before DOMContentLoaded) so the <html lang> attribute
+  // is correct from the first paint, not just after render() runs.
+  document.documentElement.lang = locale;
+
   // ---------- storage helpers ----------
 
   function loadCompletedDays() {
@@ -154,6 +158,7 @@
   // ---------- rendering ----------
 
   function renderStatic() {
+    document.documentElement.lang = locale;
     document.getElementById("app-name").textContent = t("appName");
     document.getElementById("tagline").textContent = t("tagline");
     document.getElementById("lang-switch").textContent = t("langSwitch");
