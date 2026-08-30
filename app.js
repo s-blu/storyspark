@@ -1,0 +1,294 @@
+/* StorySpark – app.js
+ * Rendering, local state (localStorage), countdown, i18n switching,
+ * day-by-day navigation through the last 10 days. No framework, no
+ * build step, no backend.
+ */
+
+(function () {
+  // Set to true to preview the layout with worst-case content: very long
+  // strings and the maximum possible number of lines (5). Useful for
+  // checking wrapping/overflow without waiting for a day that naturally
+  // produces this. No UI switch on purpose – just flip this and reload.
+  const debugShowMaximalFixedLayoutPreviewValues = false;
+
+  const DEBUG_DRAWS = [
+    {
+      categoryId: "character",
+      entry: {
+        de: "Eine ungewöhnlich weitschweifige und umständlich benannte Gestalt mit sehr langem Titel",
+        en: "An unusually long-winded character name kept only to test the layout",
+      },
+      isDuplicate: false,
+    },
+    {
+      categoryId: "timeOrSense",
+      entry: {
+        de: "Irgendwann zwischen dem allerletzten Licht des Tages und dem ersten Zeichen der hereinbrechenden Nacht",
+        en: "Somewhere between the last light of day and the first sign of falling night",
+      },
+      isDuplicate: false,
+    },
+    {
+      categoryId: "object",
+      entry: {
+        de: "Ein außergewöhnlich kompliziert gearbeiteter Gegenstand unbekannter Herkunft und Funktion",
+        en: "An unusually intricate object of unknown origin and purpose",
+      },
+      isDuplicate: true,
+    },
+    {
+      categoryId: "place",
+      entry: {
+        de: "Ein weitläufiger, kaum überschaubarer Ort irgendwo zwischen Stadt und Wildnis",
+        en: "A vast, barely surveyable place somewhere between city and wilderness",
+      },
+      isDuplicate: false,
+    },
+    {
+      categoryId: "mood",
+      entry: {
+        de: "Unwiederbringlich-vergänglich-schwer-in-Worte-zu-fassen",
+        en: "Irretrievably-fleeting-hard-to-put-into-words",
+      },
+      isDuplicate: false,
+    },
+  ];
+
+  const STORAGE_KEYS = {
+    completedDays: "storySpark:completedDays",
+    locale: "storySpark:locale",
+  };
+
+  const MAX_OFFSET = 10; // how many days back the nav arrow can go
+
+  let locale = loadLocale();
+  let viewedOffset = 0; // 0 = today, 1..MAX_OFFSET = days back
+
+  // ---------- storage helpers ----------
+
+  function loadCompletedDays() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.completedDays);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveCompletedDays(completedDays) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.completedDays, JSON.stringify(completedDays));
+    } catch (e) {
+      /* localStorage unavailable (private mode, quota, ...) – fail silently */
+    }
+  }
+
+  function loadLocale() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.locale);
+      if (stored === "de" || stored === "en") return stored;
+    } catch (e) {
+      /* ignore */
+    }
+    return (navigator.language || "de").toLowerCase().indexOf("de") === 0 ? "de" : "en";
+  }
+
+  function saveLocale(value) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.locale, value);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  // ---------- i18n ----------
+
+  function t(key) {
+    const strings = StorySpark.strings;
+    const value = strings[locale] && strings[locale][key];
+    if (value) return value;
+    return strings.de[key] || key; // fall back to German, then the key itself
+  }
+
+  function intlLocale() {
+    return locale === "de" ? "de-DE" : "en-US";
+  }
+
+  // ---------- date helpers ----------
+
+  function todayUtcDate() {
+    return new Date();
+  }
+
+  function todayUtcString() {
+    return StorySpark.draw.formatUtcDate(todayUtcDate());
+  }
+
+  function dateForOffset(offset) {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - offset);
+    return d;
+  }
+
+  function hoursUntilNextUtcMidnight() {
+    const now = new Date();
+    const nextMidnight = Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + 1,
+      0, 0, 0
+    );
+    const diffMs = nextMidnight - now.getTime();
+    return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60)));
+  }
+
+  function formatDateLabel(date) {
+    return new Intl.DateTimeFormat(intlLocale(), {
+      timeZone: "UTC",
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+    }).format(date);
+  }
+
+  // ---------- rendering ----------
+
+  function renderStatic() {
+    document.getElementById("app-name").textContent = t("appName");
+    document.getElementById("tagline").textContent = t("tagline");
+    document.getElementById("lang-switch").textContent = t("langSwitch");
+    document.getElementById("nav-back").setAttribute("aria-label", t("dayNavBackLabel"));
+    document.getElementById("nav-forward").setAttribute("aria-label", t("dayNavForwardLabel"));
+    document.title = t("appName");
+  }
+
+  function renderPrompts(draws) {
+    const list = document.getElementById("prompt-list");
+    list.innerHTML = "";
+    draws.forEach(function (draw) {
+      const li = document.createElement("li");
+      li.className = "prompt-line";
+      const text = draw.entry[locale] || draw.entry.de;
+      li.textContent = text;
+      list.appendChild(li);
+    });
+  }
+
+  function renderDateAndCountdown(date, isToday) {
+    const dateLabelEl = document.getElementById("date-label");
+    const countdownEl = document.getElementById("countdown");
+
+    if (isToday) {
+      dateLabelEl.textContent = t("todayLabel") + " · " + formatDateLabel(date);
+      const hours = hoursUntilNextUtcMidnight();
+      countdownEl.textContent = hours <= 1
+        ? t("nextInSoon")
+        : t("nextInPrefix") + " " + hours + " " + t("nextInHoursSuffix");
+      countdownEl.hidden = false;
+    } else {
+      dateLabelEl.textContent = formatDateLabel(date);
+      countdownEl.hidden = true;
+    }
+  }
+
+  function renderFab(dateStr, isToday, completedDays) {
+    const button = document.getElementById("done-button");
+    const isDone = !!completedDays[dateStr];
+    button.classList.toggle("is-done", isDone);
+    button.disabled = !isToday;
+    button.setAttribute("aria-pressed", isDone ? "true" : "false");
+    button.setAttribute("title", isDone ? t("doneButtonActive") : t("doneButton"));
+    button.setAttribute("aria-label", isDone ? t("doneButtonActive") : t("doneButton"));
+  }
+
+  function renderNavButtons() {
+    document.getElementById("nav-forward").hidden = viewedOffset === 0;
+    document.getElementById("nav-back").disabled = viewedOffset >= MAX_OFFSET;
+  }
+
+  // ---------- spark particle effect ----------
+
+  function spawnSparkParticles(button) {
+    const rect = button.getBoundingClientRect();
+    const container = document.getElementById("particle-layer");
+    const particleCount = 10;
+
+    for (let i = 0; i < particleCount; i++) {
+      const p = document.createElement("span");
+      p.className = "spark-particle";
+      const angle = (Math.PI * 2 * i) / particleCount + Math.random() * 0.4;
+      const distance = 26 + Math.random() * 22;
+      p.style.setProperty("--dx", Math.cos(angle) * distance + "px");
+      p.style.setProperty("--dy", Math.sin(angle) * distance + "px");
+      p.style.left = rect.left + rect.width / 2 + "px";
+      p.style.top = rect.top + rect.height / 2 + "px";
+      container.appendChild(p);
+      p.addEventListener("animationend", function () {
+        p.remove();
+      });
+    }
+  }
+
+  // ---------- main ----------
+
+  function render() {
+    const completedDays = loadCompletedDays();
+    const date = dateForOffset(viewedOffset);
+    const dateStr = StorySpark.draw.formatUtcDate(date);
+    const isToday = viewedOffset === 0;
+    const draws = debugShowMaximalFixedLayoutPreviewValues
+      ? DEBUG_DRAWS
+      : StorySpark.draw.getDailyDraws(date, StorySpark.data, StorySpark.config);
+
+    renderStatic();
+    renderPrompts(draws);
+    renderDateAndCountdown(date, isToday);
+    renderFab(dateStr, isToday, completedDays);
+    renderNavButtons();
+  }
+
+  function init() {
+    document.getElementById("done-button").addEventListener("click", function (e) {
+      if (viewedOffset !== 0) return; // only today can be toggled
+      const completedDays = loadCompletedDays();
+      const today = todayUtcString();
+      const wasDone = !!completedDays[today];
+
+      if (wasDone) {
+        delete completedDays[today];
+      } else {
+        completedDays[today] = true;
+        spawnSparkParticles(e.currentTarget);
+      }
+      saveCompletedDays(completedDays);
+      renderFab(today, true, completedDays);
+    });
+
+    document.getElementById("lang-switch").addEventListener("click", function () {
+      locale = locale === "de" ? "en" : "de";
+      saveLocale(locale);
+      render();
+    });
+
+    document.getElementById("nav-back").addEventListener("click", function () {
+      viewedOffset = Math.min(MAX_OFFSET, viewedOffset + 1);
+      render();
+    });
+
+    document.getElementById("nav-forward").addEventListener("click", function () {
+      viewedOffset = Math.max(0, viewedOffset - 1);
+      render();
+    });
+
+    // Re-check the countdown (and whether the day rolled over) when the tab
+    // regains focus while looking at today – deliberately not a ticking
+    // interval, see concept.md.
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible" && viewedOffset === 0) render();
+    });
+
+    render();
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();

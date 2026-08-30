@@ -1,0 +1,299 @@
+/* StorySpark – style.css
+ * Grayscale throughout, one deliberate color moment (the "done" green).
+ * Three type roles: a characterful serif for the prompt lines themselves
+ * (the actual content people came for), a quiet system sans for UI
+ * chrome, and a mono face for meta information (countdown, dates) –
+ * a small nod to notebooks and typewriters.
+ *
+ * Layout: uses the full viewport width (most people write on a laptop),
+ * but keeps the prompt text itself at a readable measure – width comes
+ * from generous margins and a meta sidebar, not from stretched text lines.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,380;0,9..144,560;1,9..144,420&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+:root {
+  --color-bg: #f3f3f1;
+  --color-surface: #fbfbfa;
+  --color-ink: #17181a;
+  --color-ink-muted: #5b5e62;
+  --color-ink-faint: #98999c;
+  --color-border: #dcdcd9;
+  --color-fab-bg: #eaeae8;
+  --color-accent: #2f7d4f;
+  --color-accent-bg: #e6f1ea;
+  --color-accent-ink: #163a26;
+
+  --font-display: "Fraunces", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --edge: clamp(1.25rem, 4vw, 4rem);
+  --content-width: 36rem;
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-ui);
+  min-height: 100vh;
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ---------- header ---------- */
+
+.site-header {
+  position: relative;
+  padding: 2.75rem var(--edge) 1.25rem;
+  text-align: center;
+}
+
+.app-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-optical-sizing: auto;
+  font-weight: 420;
+  font-size: clamp(1.9rem, 4.2vw, 2.8rem);
+  color: var(--color-ink);
+  letter-spacing: 0.005em;
+  margin: 0;
+}
+
+.lang-switch {
+  position: absolute;
+  top: 1.9rem;
+  right: var(--edge);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--color-ink-faint);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.lang-switch:hover,
+.lang-switch:focus-visible {
+  color: var(--color-ink);
+}
+
+/* ---------- content (centered) ---------- */
+
+.content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem var(--edge);
+  text-align: center;
+}
+
+.prompt-panel {
+  width: 100%;
+  max-width: var(--content-width);
+}
+
+.date-label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-ink-faint);
+  letter-spacing: 0.02em;
+}
+
+.prompt-list {
+  list-style: none;
+  margin: 1.4rem 0 0;
+  padding: 1.8rem 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.prompt-line {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: clamp(1.5rem, 3.4vw, 2.5rem);
+  font-weight: 380;
+  line-height: 1.25;
+}
+
+.prompt-line:nth-child(even) {
+  font-style: italic;
+  font-weight: 420;
+  color: var(--color-ink-muted);
+}
+
+/* ---------- footer ---------- */
+
+.site-footer {
+  padding: 1.5rem var(--edge) 2.5rem;
+  text-align: center;
+}
+
+.tagline {
+  margin: 0 auto;
+  color: var(--color-ink-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  max-width: var(--content-width);
+}
+
+.countdown {
+  margin: 0.6rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-ink-faint);
+  letter-spacing: 0.02em;
+}
+
+/* ---------- day navigation (fixed edges) ---------- */
+
+.day-nav {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--color-ink-faint);
+  opacity: 0.35;
+  cursor: pointer;
+  transition: opacity 160ms ease, background-color 160ms ease, color 160ms ease;
+  z-index: 5;
+}
+
+.day-nav:hover:not(:disabled),
+.day-nav:focus-visible {
+  opacity: 1;
+  color: var(--color-ink);
+  background: var(--color-surface);
+}
+
+.day-nav:disabled {
+  opacity: 0.12;
+  cursor: default;
+}
+
+.day-nav--back {
+  left: clamp(0.5rem, 1.6vw, 1.5rem);
+}
+
+.day-nav--forward {
+  right: clamp(0.5rem, 1.6vw, 1.5rem);
+}
+
+/* ---------- FAB (done button) ---------- */
+
+.fab {
+  position: fixed;
+  right: clamp(1.25rem, 3vw, 2.5rem);
+  bottom: clamp(1.25rem, 3vw, 2.5rem);
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-fab-bg);
+  color: var(--color-ink-faint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(23, 24, 26, 0.06);
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, transform 120ms ease;
+  z-index: 6;
+}
+
+.fab:hover:not(:disabled),
+.fab:focus-visible {
+  background: var(--color-border);
+  color: var(--color-ink-muted);
+}
+
+.fab:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.fab:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.fab.is-done {
+  background: var(--color-accent-bg);
+  border-color: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+.fab.is-done:hover:not(:disabled),
+.fab.is-done:focus-visible {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.fab:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+/* ---------- spark particles ---------- */
+
+#particle-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.spark-particle {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  transform: translate(-50%, -50%);
+  animation: spark-fly 520ms ease-out forwards;
+}
+
+@keyframes spark-fly {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.3);
+  }
+}
