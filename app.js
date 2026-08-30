@@ -208,26 +208,42 @@
 
   // ---------- spark particle effect ----------
 
-  function spawnSparkParticles(button) {
-    const rect = button.getBoundingClientRect();
-    const container = document.getElementById("particle-layer");
-    const particleCount = 10;
+function spawnSparkParticles(button) {
+  const rect = button.getBoundingClientRect();
+  const container = document.getElementById("particle-layer");
+  const particleCount = 22;
+  // Grünabstufungen inkl. ein paar heller "Glint"-Funken – bleibt der eine
+  // Farbmoment der Seite, wirkt aber lebendiger als Einheitsgrün.
+  const colors = ["#2f7d4f", "#3f9463", "#1f5c3a", "#8fd1ab", "#eaf7ef"];
 
-    for (let i = 0; i < particleCount; i++) {
-      const p = document.createElement("span");
-      p.className = "spark-particle";
-      const angle = (Math.PI * 2 * i) / particleCount + Math.random() * 0.4;
-      const distance = 26 + Math.random() * 22;
-      p.style.setProperty("--dx", Math.cos(angle) * distance + "px");
-      p.style.setProperty("--dy", Math.sin(angle) * distance + "px");
-      p.style.left = rect.left + rect.width / 2 + "px";
-      p.style.top = rect.top + rect.height / 2 + "px";
-      container.appendChild(p);
-      p.addEventListener("animationend", function () {
-        p.remove();
-      });
-    }
+  for (let i = 0; i < particleCount; i++) {
+    const p = document.createElement("span");
+    p.className = "spark-particle";
+
+    const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5;
+    const distance = 46 + Math.random() * 62; // größerer Radius als vorher
+    const size = 3 + Math.random() * 5;
+    const duration = 950 + Math.random() * 550; // ~0.95–1.5s
+    const delay = Math.random() * 90;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    p.style.setProperty("--dx", Math.cos(angle) * distance + "px");
+    p.style.setProperty("--dy", Math.sin(angle) * distance + "px");
+    p.style.width = size + "px";
+    p.style.height = size + "px";
+    p.style.background = color;
+    p.style.boxShadow = "0 0 " + (size + 3) + "px " + color;
+    p.style.animationDuration = duration + "ms";
+    p.style.animationDelay = delay + "ms";
+    p.style.left = rect.left + rect.width / 2 + "px";
+    p.style.top = rect.top + rect.height / 2 + "px";
+
+    container.appendChild(p);
+    p.addEventListener("animationend", function () {
+      p.remove();
+    });
   }
+}
 
   // ---------- main ----------
 

@@ -279,12 +279,12 @@ body {
 
 .spark-particle {
   position: absolute;
-  width: 5px;
-  height: 5px;
   border-radius: 50%;
-  background: var(--color-accent);
   transform: translate(-50%, -50%);
-  animation: spark-fly 520ms ease-out forwards;
+  animation-name: spark-fly;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  will-change: transform, opacity;
 }
 
 @keyframes spark-fly {
@@ -292,8 +292,16 @@ body {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
+  18% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--dx) * 0.75), calc(-50% + var(--dy) * 0.75 - 4px)) scale(1.15);
+  }
+  55% {
+    opacity: 0.95;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.9);
+  }
   100% {
     opacity: 0;
-    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.3);
+    transform: translate(calc(-50% + var(--dx) * 1.1), calc(-50% + var(--dy) * 1.1 + 16px)) scale(0.3);
   }
 }
