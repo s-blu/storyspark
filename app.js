@@ -9,7 +9,7 @@
   // strings and the maximum possible number of lines (5). Useful for
   // checking wrapping/overflow without waiting for a day that naturally
   // produces this. No UI switch on purpose – just flip this and reload.
-  const debugShowMaximalFixedLayoutPreviewValues = false;
+  const debugMode = false;
 
   const DEBUG_DRAWS = [
     {
@@ -180,15 +180,14 @@
 
     if (isToday) {
       dateLabelEl.textContent = t("todayLabel") + " · " + formatDateLabel(date);
+    } else {
+      dateLabelEl.textContent = formatDateLabel(date);
+    }
       const hours = hoursUntilNextUtcMidnight();
       countdownEl.textContent = hours <= 1
         ? t("nextInSoon")
         : t("nextInPrefix") + " " + hours + " " + t("nextInHoursSuffix");
       countdownEl.hidden = false;
-    } else {
-      dateLabelEl.textContent = formatDateLabel(date);
-      countdownEl.hidden = true;
-    }
   }
 
   function renderFab(dateStr, isToday, completedDays) {
@@ -252,7 +251,7 @@ function spawnSparkParticles(button) {
     const date = dateForOffset(viewedOffset);
     const dateStr = StorySpark.draw.formatUtcDate(date);
     const isToday = viewedOffset === 0;
-    const draws = debugShowMaximalFixedLayoutPreviewValues
+    const draws = debugMode
       ? DEBUG_DRAWS
       : StorySpark.draw.getDailyDraws(date, StorySpark.data, StorySpark.config);
 

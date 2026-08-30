@@ -357,8 +357,8 @@ window.StorySpark = window.StorySpark || {};
   // app.js falls back to "de" whenever an "en" string is empty.
   StorySpark.strings = {
     de: {
-      appName: "Story Spark",
-      tagline: "Ein täglicher Impuls fürs kreative Schreiben. Kein Editor, kein Konto – nur der Funke.",
+      appName: "Schreibfunke",
+      tagline: "Ein Impuls fürs kreative Schreiben. Für jeden Tag einen, für jeden Besucher gleich. Geh und schreib etwas - eine Kurzgeschichte, eine Szene, einen Vers, was du willst.",
       todayLabel: "Heute",
       nextInPrefix: "Nächster Funke in ca.",
       nextInHoursSuffix: "Std.",
