@@ -150,6 +150,66 @@ body {
   color: var(--color-ink-muted);
 }
 
+.gallery-panel {
+  width: 100%;
+  max-width: var(--content-width);
+}
+
+.gallery-title {
+  margin: 0 0 1.6rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  color: var(--color-ink);
+}
+
+.gallery-empty {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-size: 0.95rem;
+}
+
+.gallery-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  text-align: left;
+  max-height: min(60vh, 32rem);
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.gallery-item {
+  padding-bottom: 1.4rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.gallery-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.gallery-item-date {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-ink-faint);
+  letter-spacing: 0.02em;
+}
+
+.gallery-item-prompt {
+  margin: 0;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 1.15rem;
+  font-weight: 380;
+  line-height: 1.45;
+  color: var(--color-ink);
+}
+
 /* ---------- footer ---------- */
 
 .site-footer {

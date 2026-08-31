@@ -335,6 +335,10 @@ window.StorySpark = window.StorySpark || {};
       doneButtonActive: "Geschafft ✓",
       dayNavBackLabel: "Vorherigen Tag anzeigen",
       dayNavForwardLabel: "Zu heute zurück",
+      dayNavToGalleryLabel: "Funkensammlung anzeigen",
+      dayNavFromGalleryLabel: "Zurück zu den Tagen",
+      galleryTitle: "Funkensammlung",
+      galleryEmpty: "Noch keine Tage als 'Geschafft' markiert.",
       langSwitch: "DE / EN",
     },
 en: {
@@ -348,6 +352,10 @@ en: {
   doneButtonActive: "Done ✓",
   dayNavBackLabel: "Show previous day",
   dayNavForwardLabel: "Back to today",
+  dayNavToGalleryLabel: "View your sparks",
+  dayNavFromGalleryLabel: "Back to the days",
+  galleryTitle: "Spark collection",
+  galleryEmpty: "No days marked \u201cDone\u201d yet.",
   langSwitch: "EN / DE",
 },
   };

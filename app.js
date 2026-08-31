@@ -61,8 +61,39 @@
 
   const MAX_OFFSET = 10; // how many days back the nav arrow can go
 
+  // How many past days (offsets 1..DEBUG_GALLERY_LOOKBACK) to draw dummy
+  // "done" days from when debugMode is on, and how many of those to mark
+  // as completed. Deliberately > MAX_OFFSET so the gallery preview also
+  // exercises days outside the normal 10-day archive, and > 30 so the
+  // scrollable gallery list itself gets a real workout.
+  const DEBUG_GALLERY_LOOKBACK = 60;
+  const DEBUG_GALLERY_COUNT = 34;
+
+  // Builds a fake completedDays map for debugMode previews. Dates are real
+  // past UTC dates and prompts are computed through the normal seeded draw
+  // (StorySpark.draw.getDailyDraws), so the gallery preview shows genuine,
+  // varied prompt content – never the fixed DEBUG_DRAWS placeholder lines,
+  // which only stand in for *today's* prompt panel.
+  function buildDebugCompletedDays() {
+    const rng = StorySpark.draw.rngFor("debug-gallery-preview");
+    const offsets = [];
+    for (let i = 1; i <= DEBUG_GALLERY_LOOKBACK; i++) offsets.push(i);
+    for (let i = offsets.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const tmp = offsets[i];
+      offsets[i] = offsets[j];
+      offsets[j] = tmp;
+    }
+    const days = {};
+    offsets.slice(0, DEBUG_GALLERY_COUNT).forEach(function (offset) {
+      days[StorySpark.draw.formatUtcDate(dateForOffset(offset))] = true;
+    });
+    return days;
+  }
+
   let locale = loadLocale();
   let viewedOffset = 0; // 0 = today, 1..MAX_OFFSET = days back
+  let galleryMode = false; // true = showing the "memories" overview past the archive end
 
   // Set immediately (before DOMContentLoaded) so the <html lang> attribute
   // is correct from the first paint, not just after render() runs.
@@ -71,6 +102,7 @@
   // ---------- storage helpers ----------
 
   function loadCompletedDays() {
+    if (debugMode) return buildDebugCompletedDays();
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.completedDays);
       return raw ? JSON.parse(raw) : {};
@@ -80,6 +112,7 @@
   }
 
   function saveCompletedDays(completedDays) {
+    if (debugMode) return; // don't let preview toggling touch real user data
     try {
       localStorage.setItem(STORAGE_KEYS.completedDays, JSON.stringify(completedDays));
     } catch (e) {
@@ -162,8 +195,6 @@
     document.getElementById("app-name").textContent = t("appName");
     document.getElementById("tagline").textContent = t("tagline");
     document.getElementById("lang-switch").textContent = t("langSwitch");
-    document.getElementById("nav-back").setAttribute("aria-label", t("dayNavBackLabel"));
-    document.getElementById("nav-forward").setAttribute("aria-label", t("dayNavForwardLabel"));
     document.title = t("appName");
   }
 
@@ -206,8 +237,69 @@
   }
 
   function renderNavButtons() {
-    document.getElementById("nav-forward").hidden = viewedOffset === 0;
-    document.getElementById("nav-back").hidden = viewedOffset >= MAX_OFFSET;
+    const backBtn = document.getElementById("nav-back");
+    const forwardBtn = document.getElementById("nav-forward");
+
+    forwardBtn.hidden = viewedOffset === 0 && !galleryMode;
+    backBtn.hidden = galleryMode; // the gallery is the last page – no further back
+
+    const atArchiveEnd = !galleryMode && viewedOffset >= MAX_OFFSET;
+    backBtn.setAttribute(
+      "aria-label",
+      atArchiveEnd ? t("dayNavToGalleryLabel") : t("dayNavBackLabel")
+    );
+    forwardBtn.setAttribute(
+      "aria-label",
+      galleryMode ? t("dayNavFromGalleryLabel") : t("dayNavForwardLabel")
+    );
+  }
+
+  // ---------- gallery ("memories") ----------
+
+  function renderGallery(completedDays) {
+    const listEl = document.getElementById("gallery-list");
+    const emptyEl = document.getElementById("gallery-empty");
+    document.getElementById("gallery-title").textContent = t("galleryTitle");
+
+    const dateStrs = Object.keys(completedDays)
+      .filter(function (d) { return completedDays[d]; })
+      .sort()
+      .reverse(); // newest first
+
+    listEl.innerHTML = "";
+
+    if (dateStrs.length === 0) {
+      emptyEl.textContent = t("galleryEmpty");
+      emptyEl.hidden = false;
+      listEl.hidden = true;
+      return;
+    }
+
+    emptyEl.hidden = true;
+    listEl.hidden = false;
+
+    dateStrs.forEach(function (dateStr) {
+      const date = new Date(dateStr + "T00:00:00Z");
+      const draws = StorySpark.draw.getDailyDraws(date, StorySpark.data, StorySpark.config);
+      const promptText = draws
+        .map(function (d) { return d.entry[locale] || d.entry.de; })
+        .join(" · ");
+
+      const li = document.createElement("li");
+      li.className = "gallery-item";
+
+      const dateEl = document.createElement("p");
+      dateEl.className = "gallery-item-date";
+      dateEl.textContent = formatDateLabel(date);
+
+      const promptEl = document.createElement("p");
+      promptEl.className = "gallery-item-prompt";
+      promptEl.textContent = promptText;
+
+      li.appendChild(dateEl);
+      li.appendChild(promptEl);
+      listEl.appendChild(li);
+    });
   }
 
   // ---------- spark particle effect ----------
@@ -253,6 +345,19 @@ function spawnSparkParticles(button) {
 
   function render() {
     const completedDays = loadCompletedDays();
+
+    renderStatic();
+    document.getElementById("prompt-panel").hidden = galleryMode;
+    document.getElementById("gallery-panel").hidden = !galleryMode;
+    document.getElementById("countdown").hidden = galleryMode;
+
+    if (galleryMode) {
+      renderGallery(completedDays);
+      renderFab("", false, completedDays); // no day is "current" in the gallery -> disabled
+      renderNavButtons();
+      return;
+    }
+
     const date = dateForOffset(viewedOffset);
     const dateStr = StorySpark.draw.formatUtcDate(date);
     const isToday = viewedOffset === 0;
@@ -260,7 +365,6 @@ function spawnSparkParticles(button) {
       ? DEBUG_DRAWS
       : StorySpark.draw.getDailyDraws(date, StorySpark.data, StorySpark.config);
 
-    renderStatic();
     renderPrompts(draws);
     renderDateAndCountdown(date, isToday);
     renderFab(dateStr, isToday, completedDays);
@@ -291,12 +395,22 @@ function spawnSparkParticles(button) {
     });
 
     document.getElementById("nav-back").addEventListener("click", function () {
-      viewedOffset = Math.min(MAX_OFFSET, viewedOffset + 1);
+      if (galleryMode) return; // no further back than the gallery
+      if (viewedOffset >= MAX_OFFSET) {
+        galleryMode = true; // step from the oldest archive day into the gallery
+      } else {
+        viewedOffset += 1;
+      }
       render();
     });
 
     document.getElementById("nav-forward").addEventListener("click", function () {
-      viewedOffset = Math.max(0, viewedOffset - 1);
+      if (galleryMode) {
+        galleryMode = false;
+        viewedOffset = MAX_OFFSET; // step back out to the oldest archive day
+      } else {
+        viewedOffset = Math.max(0, viewedOffset - 1);
+      }
       render();
     });
 
@@ -304,7 +418,7 @@ function spawnSparkParticles(button) {
     // regains focus while looking at today – deliberately not a ticking
     // interval, see concept.md.
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "visible" && viewedOffset === 0) render();
+      if (document.visibilityState === "visible" && viewedOffset === 0 && !galleryMode) render();
     });
 
     render();
