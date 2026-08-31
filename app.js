@@ -59,7 +59,7 @@
     locale: "storySpark:locale",
   };
 
-  const MAX_OFFSET = 10; // how many days back the nav arrow can go
+  const MAX_OFFSET = 6; // how many days back the nav arrow can go
 
   // How many past days (offsets 1..DEBUG_GALLERY_LOOKBACK) to draw dummy
   // "done" days from when debugMode is on, and how many of those to mark
