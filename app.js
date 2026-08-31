@@ -207,7 +207,7 @@
 
   function renderNavButtons() {
     document.getElementById("nav-forward").hidden = viewedOffset === 0;
-    document.getElementById("nav-back").disabled = viewedOffset >= MAX_OFFSET;
+    document.getElementById("nav-back").hidden = viewedOffset >= MAX_OFFSET;
   }
 
   // ---------- spark particle effect ----------
