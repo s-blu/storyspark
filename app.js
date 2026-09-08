@@ -226,11 +226,11 @@
       countdownEl.hidden = false;
   }
 
-  function renderFab(dateStr, isToday, completedDays) {
+  function renderFab(dateStr, isSparkPage, completedDays) {
     const button = document.getElementById("done-button");
     const isDone = !!completedDays[dateStr];
     button.classList.toggle("is-done", isDone);
-    button.disabled = !isToday;
+    button.disabled = !isSparkPage;
     button.setAttribute("aria-pressed", isDone ? "true" : "false");
     button.setAttribute("title", isDone ? t("doneButtonActive") : t("doneButton"));
     button.setAttribute("aria-label", isDone ? t("doneButtonActive") : t("doneButton"));
@@ -367,25 +367,26 @@ function spawnSparkParticles(button) {
 
     renderPrompts(draws);
     renderDateAndCountdown(date, isToday);
-    renderFab(dateStr, isToday, completedDays);
+    renderFab(dateStr, true, completedDays);
     renderNavButtons();
   }
 
   function init() {
     document.getElementById("done-button").addEventListener("click", function (e) {
-      if (viewedOffset !== 0) return; // only today can be toggled
+      if (galleryMode) return; // in der Galerie ist kein Tag ausgewählt
       const completedDays = loadCompletedDays();
-      const today = todayUtcString();
-      const wasDone = !!completedDays[today];
+      const date = dateForOffset(viewedOffset);
+      const dateStr = StorySpark.draw.formatUtcDate(date);
+      const wasDone = !!completedDays[dateStr];
 
       if (wasDone) {
-        delete completedDays[today];
+        delete completedDays[dateStr];
       } else {
-        completedDays[today] = true;
+        completedDays[dateStr] = true;
         spawnSparkParticles(e.currentTarget);
       }
       saveCompletedDays(completedDays);
-      renderFab(today, true, completedDays);
+      renderFab(dateStr, true, completedDays);
     });
 
     document.getElementById("lang-switch").addEventListener("click", function () {
